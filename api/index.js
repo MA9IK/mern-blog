@@ -4,14 +4,21 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const { validationResult } = require('express-validator');
 
 const mongoose = require('mongoose');
 const PORT = process.env.PORT || 5000;
 
 const User = require('./models/UserModel');
+const {
+  RegisterValidation,
+  LoginValidation,
+  loginValidator,
+  registerValidator
+} = require('./validations/UserValidation');
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 
 app.use(express.json());
-app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(cookieParser());
 
 mongoose
@@ -24,8 +31,12 @@ app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
-app.post('/register', async (req, res) => {
+app.post('/register', registerValidator, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     const { username, password } = req.body;
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -40,15 +51,22 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', loginValidator, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     const { username, password } = req.body;
     await User.findOne({ username: username }).then(user => {
       if (user) {
         let match = bcrypt.compareSync(password, user.password);
         if (match) {
           const token = jwt.sign({ username, id: user._id }, 'secret');
-          res.cookie('token', token).json('ok');
+          res.cookie('token', token).json({
+            id: user._id,
+            username
+          });
         } else {
           res.status(400).json({ error: 'Invalid Credentials' });
         }
