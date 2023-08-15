@@ -6,6 +6,7 @@ const LoginPage = () => {
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [redirect, setRedirect] = React.useState(false);
+  const [errors, setErrors] = React.useState([]);
   const { user, setUser } = useContext(UserContext);
 
   async function login(ev) {
@@ -22,14 +23,13 @@ const LoginPage = () => {
       credentials: 'include'
     });
 
+    const data = await response.json();
+    const { error } = data;
+    setErrors(error);
 
-    if (response.ok) {
-      response.json().then(data => {
-        setUser(data);
-        setRedirect(true);
-      });
-    } else {
-      alert('Something went wrong');
+    if (!error) {
+      setUser(data);
+      setRedirect(true);
     }
   }
 
@@ -37,10 +37,25 @@ const LoginPage = () => {
     return <Navigate to='/' />;
   }
 
+  function showError() {
+    if (errors) {
+      return (
+        <div
+          style={{
+            color: 'red',
+            fontSize: '12px'
+          }}>
+          {errors}
+        </div>
+      );
+    }
+  }
+
   return (
     <div>
       <form className='login-form' onSubmit={login}>
         <h1>Login</h1>
+        {showError()}
         <input
           type='text'
           placeholder='username'

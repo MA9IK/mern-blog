@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import { Navigate } from 'react-router-dom';
 
-const CreatePost = () => {
+const EditPost = () => {
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [files, setFile] = useState('');
   const [redirect, setRedirect] = useState(false);
-  const [errors, setErrors] = useState([]);
 
   const modules = {
     toolbar: [
@@ -41,62 +39,18 @@ const CreatePost = () => {
     'video'
   ];
 
-  async function createNewPost(ev) {
-    const data = new FormData();
-    data.set('title', title);
-    data.set('summary', summary);
-    data.set('content', content);
-    data.set('file', files);
-    ev.preventDefault();
-
-    const response = await fetch('http://localhost:5000/post', {
-      method: 'POST',
-      body: data,
-      credentials: 'include'
-    });
-    if (response.ok) {
-      setRedirect(true);
-    }
-
-    const info = await response.json();
-    const { errors } = info;
-    setErrors(errors);
-  }
-
   if (redirect) {
     return <Navigate to='/' />;
   }
 
-  function showError(path) {
-    if (errors) {
-      return errors.map((error, index) => {
-        if (error.path === path) {
-          return (
-            <div
-              style={{
-                color: 'red',
-                fontSize: '12px'
-              }}
-              key={index}>
-              {error.msg}
-            </div>
-          );
-        }
-        return null;
-      });
-    }
-  }
-
   return (
-    <form onSubmit={createNewPost}>
-      {showError('title')}
+    <form>
       <input
         type='text'
         placeholder='Title'
         value={title}
         onChange={e => setTitle(e.target.value)}
       />
-      {showError('summary')}
       <input
         type='text'
         placeholder='Summary'
@@ -104,7 +58,6 @@ const CreatePost = () => {
         onChange={e => setSummary(e.target.value)}
       />
       <input type='file' onChange={e => setFile(e.target.files[0])} />
-      {showError('content')}
       <ReactQuill
         value={content}
         modules={modules}
@@ -118,4 +71,4 @@ const CreatePost = () => {
   );
 };
 
-export default CreatePost;
+export default EditPost;

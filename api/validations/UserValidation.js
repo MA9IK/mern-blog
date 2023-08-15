@@ -9,16 +9,6 @@ const registerValidator = [
   })
 ];
 
-const loginValidator = [
-  body('username', 'Username must be at least 3 characters').isLength({
-    min: 3
-  }),
-  body('password', 'Password must be at least 6 characters').isLength({
-    min: 6
-  })
-];
-
 module.exports = {
-  registerValidator,
-  loginValidator
+  registerValidator
 };
