@@ -157,6 +157,25 @@ app.put('/post/:id', uploadMiddleware.single('file'), async (req, res) => {
   });
 });
 
+app.delete('/post/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    const imagePath = post.file;
+    fs.unlinkSync(imagePath);
+    await Post.deleteOne({ _id: id });
+
+    res.json({ message: 'Post deleted' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

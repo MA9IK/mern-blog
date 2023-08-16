@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 
 const PostPage = () => {
@@ -8,6 +8,7 @@ const PostPage = () => {
   const [post, setPost] = useState(null);
   const { id } = useParams();
   const { user, setUser } = useContext(UserContext);
+  const [redirect, setRedirect] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -31,6 +32,25 @@ const PostPage = () => {
     new Date(post.createdAt),
     'MMMM dd, yyyy, HH:mm a'
   );
+
+  const handleDelete = async () => {
+    try {
+      await fetch(`http://localhost:5000/post/${post._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      setRedirect(true);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  if (redirect) {
+    return <Navigate to='/' />;
+  }
 
   return (
     <div className='post-page'>
@@ -69,6 +89,22 @@ const PostPage = () => {
               textDecoration: 'none'
             }}>
             Edit
+          </Link>
+          <Link
+            to={`/post/${post._id}`}
+            style={{
+              backgroundColor: '#333',
+              display: 'inline-block',
+              color: '#fff',
+              padding: '5px 20px',
+              borderRadius: '5px',
+              fontSize: '0.8rem',
+              marginLeft: '10px',
+
+              textDecoration: 'none'
+            }}
+            onClick={handleDelete}>
+            Delete
           </Link>
         </div>
       )}

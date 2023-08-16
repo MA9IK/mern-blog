@@ -14,7 +14,7 @@ const Post = ({ _id, title, summary, content, file, createdAt, author }) => {
       </Link>
       <div className='texts'>
         <Link
-          to={`/post/${title}`}
+          to={`/post/${_id}`}
           style={{ textDecoration: 'none', color: 'inherit' }}>
           <h2>{title}</h2>
         </Link>
