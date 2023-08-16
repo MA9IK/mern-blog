@@ -106,6 +106,9 @@ app.post('/post', uploadMiddleware.single('file'), async (req, res) => {
   fs.renameSync(path, newPath);
 
   const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json({ error: 'Not Authorized' });
+  }
   jwt.verify(token, 'secret', {}, async (err, info) => {
     if (err) throw err;
     const { title, summary, content } = req.body;
@@ -131,6 +134,27 @@ app.get('/post', async (req, res) => {
 
 app.get('/post/:id', async (req, res) => {
   res.json(await Post.findById(req.params.id).populate('author', 'username'));
+});
+
+app.put('/post/:id', uploadMiddleware.single('file'), async (req, res) => {
+  jwt.verify(req.cookies.token, 'secret', {}, async (err, info) => {
+    if (err) throw err;
+    const { id } = req.params;
+    const { title, summary, content } = req.body;
+    const post = await Post.findById(id);
+    post.title = title;
+    post.summary = summary;
+    post.content = content;
+    if (req.file) {
+      const parts = req.file.originalname.split('.');
+      const ext = parts[parts.length - 1];
+      const newPath = req.file.path + '.' + ext;
+      fs.renameSync(req.file.path, newPath);
+      post.file = newPath;
+    }
+    await post.save();
+    res.json(post);
+  });
 });
 
 app.listen(PORT, () => {

@@ -1,50 +1,50 @@
-import React, { useState } from 'react';
-import ReactQuill from 'react-quill';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import Editor from '../components/Editor';
+import { Navigate, useParams } from 'react-router-dom';
 
 const EditPost = () => {
+  const { id } = useParams();
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [files, setFile] = useState('');
   const [redirect, setRedirect] = useState(false);
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [
-        { list: 'ordered' },
-        { list: 'bullet' },
-        { indent: '-1' },
-        { indent: '+1' }
-      ],
-      ['link', 'image', 'video'],
-      ['clean']
-    ]
-  };
+  useEffect(() => {
+    fetch(`http://localhost:5000/post/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        setTitle(data.title);
+        setSummary(data.summary);
+        setContent(data.content);
+      });
+  }, []);
 
-  const formats = [
-    'header',
-    'bold',
-    'italic',
-    'underline',
-    'strike',
-    'blockquote',
-    'list',
-    'bullet',
-    'indent',
-    'link',
-    'image',
-    'video'
-  ];
+  async function UpdatePost(ev) {
+    ev.preventDefault();
+    const data = new FormData();
+    data.set('title', title);
+    data.set('summary', summary);
+    data.set('content', content);
+    data.set('file', files);
+    // if (files?.[0]) {
+    //   data.set('file', files?.[0]);
+    // }
+    await fetch(`http://localhost:5000/post/${id}`, {
+      method: 'PUT',
+      body: data,
+      credentials: 'include'
+    });
+
+    setRedirect(true);
+  }
 
   if (redirect) {
-    return <Navigate to='/' />;
+    return <Navigate to={`/post/${id}`} />;
   }
 
   return (
-    <form>
+    <form onSubmit={UpdatePost}>
       <input
         type='text'
         placeholder='Title'
@@ -58,12 +58,7 @@ const EditPost = () => {
         onChange={e => setSummary(e.target.value)}
       />
       <input type='file' onChange={e => setFile(e.target.files[0])} />
-      <ReactQuill
-        value={content}
-        modules={modules}
-        formats={formats}
-        onChange={e => setContent(e)}
-      />
+      <Editor value={content} onChange={setContent} />
       <button style={{ margin: '10px 0' }} type='submit'>
         Submit
       </button>

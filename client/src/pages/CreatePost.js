@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import Editor from '../components/Editor';
+import { Box, Modal, Typography } from '@mui/material';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 const CreatePost = () => {
   const [title, setTitle] = useState('');
@@ -10,36 +12,10 @@ const CreatePost = () => {
   const [files, setFile] = useState('');
   const [redirect, setRedirect] = useState(false);
   const [errors, setErrors] = useState([]);
-
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [
-        { list: 'ordered' },
-        { list: 'bullet' },
-        { indent: '-1' },
-        { indent: '+1' }
-      ],
-      ['link', 'image', 'video'],
-      ['clean']
-    ]
-  };
-
-  const formats = [
-    'header',
-    'bold',
-    'italic',
-    'underline',
-    'strike',
-    'blockquote',
-    'list',
-    'bullet',
-    'indent',
-    'link',
-    'image',
-    'video'
-  ];
+  const [authError, setAuthError] = useState('');
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   async function createNewPost(ev) {
     const data = new FormData();
@@ -59,8 +35,12 @@ const CreatePost = () => {
     }
 
     const info = await response.json();
-    const { errors } = info;
-    setErrors(errors);
+    const { errors, error } = info;
+    if (errors) {
+      setErrors(errors);
+    } else {
+      setAuthError(error);
+    }
   }
 
   if (redirect) {
@@ -87,9 +67,62 @@ const CreatePost = () => {
     }
   }
 
+  function showAuthError() {
+    if (authError) {
+      return (
+        <Modal open={open} onClose={handleClose}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 400,
+              height: 300,
+              bgcolor: 'background.paper',
+              boxShadow: 24,
+              p: 4
+            }}>
+            <Typography
+              sx={{
+                position: 'absolute',
+                top: '40%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}>
+              <HighlightOffIcon sx={{ fontSize: 200 }} />
+            </Typography>
+            <Typography
+              variant='h6'
+              component='h2'
+              sx={{
+                textAlign: 'center',
+                position: 'absolute',
+                bottom: 0,
+                left: '50%',
+                transform: 'translateX(-50%)'
+              }}>
+              {authError}
+              <Link
+                to='/register'
+                style={{
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}>
+                <br />
+                Make an account
+              </Link>
+            </Typography>
+          </Box>
+        </Modal>
+      );
+    }
+  }
+
   return (
     <form onSubmit={createNewPost}>
       {showError('title')}
+      {showAuthError()}
       <input
         type='text'
         placeholder='Title'
@@ -105,13 +138,8 @@ const CreatePost = () => {
       />
       <input type='file' onChange={e => setFile(e.target.files[0])} />
       {showError('content')}
-      <ReactQuill
-        value={content}
-        modules={modules}
-        formats={formats}
-        onChange={e => setContent(e)}
-      />
-      <button style={{ margin: '10px 0' }} type='submit'>
+      <Editor value={content} onChange={setContent} />
+      <button style={{ margin: '10px 0' }} type='submit' onClick={handleOpen}>
         Submit
       </button>
     </form>
